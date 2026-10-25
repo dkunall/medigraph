@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: ledger-service
+  datasource:
+    url: ${LEDGER_DB_URL:jdbc:postgresql://localhost:5432/ledger?currentSchema=ledger}
+    username: ${LEDGER_DB_USER:medigraph}
+    password: ${LEDGER_DB_PASSWORD:medigraph}   # local dev default only; real deployments inject a secret
+  flyway:
+    schemas: ledger
+    default-schema: ledger
+server:
+  port: ${PORT:8085}
+medigraph:
+  outbox:
+    relay-enabled: false        # the ledger is the sink, it has no outbox of its own
+  security:
+    jwt:
+      jwk-set-uri: ${JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}
+    client:
+      id: ledger-service
+      secret: ${OAUTH_CLIENT_SECRET:dev-only-ledger-secret}   # dev default, matches the gateway's dev issuer
+      token-uri: ${TOKEN_URI:http://localhost:8080/oauth2/token}
+  ledger:
+    raft:
+      node-id: ${RAFT_NODE_ID:ledger1}

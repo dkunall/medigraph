@@ -30,6 +30,7 @@
         <module>medigraph-platform</module>
         <module>medigraph-arch-rules</module>
         <module>medigraph-test-support</module>
+        <module>services/ledger-service</module>
     </modules>
 
     <properties>
