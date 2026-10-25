@@ -52,11 +52,14 @@ class IdentityServiceTest {
         Resp a = api.post("/api/v1/patients", person("MRN-1001", "Asha", "Verma", "1990-04-12", "9810000001", "Delhi"), receptionA);
         assertThat(a.status()).as(a.toString()).isEqualTo(201);
         assertThat(a.json().get("decision").asText()).isEqualTo("NEW");
+        // nobody to compare against yet: no weight at all, rather than "-Infinity" leaking into the JSON
+        assertThat(a.json().path("matchWeight").isMissingNode() || a.json().get("matchWeight").isNull()).isTrue();
         String hid = a.json().get("healthId").asText();
         assertThat(a.json().get("formattedHealthId").asText()).matches("\\d{4}-\\d{4}-\\d{4}-\\d{2}");
 
         Resp b = api.post("/api/v1/patients", person("B-77", "Aasha", "Varma", "1990-04-12", "+91 98100 00001", "New Delhi"), doctorB);
         assertThat(b.json().get("decision").asText()).isEqualTo("AUTO_LINK");
+        assertThat(b.json().get("matchWeight").isNumber()).isTrue();
         assertThat(b.json().get("healthId").asText()).isEqualTo(hid);
 
         // the patient sees their own identity; another patient, a doctor and an anonymous caller do not

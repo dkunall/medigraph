@@ -28,7 +28,7 @@ public final class PatientRegistration {
     }
 
     public record Registration(String healthId, String formattedHealthId, String recordId, MatchDecision decision,
-                               double matchWeight, String matchedRecordId, List<String> reviewTaskIds) {
+                               Double matchWeight, String matchedRecordId, List<String> reviewTaskIds) {
     }
 
     private final MasterPatientIndex mpi;
@@ -75,7 +75,7 @@ public final class PatientRegistration {
         }
         events.registered(healthId, p.recordId(), o.decision().name());
         return new Registration(healthId, HealthId.parse(healthId).formatted(), p.recordId(), o.decision(),
-                o.bestWeight(), o.bestCandidate(), o.reviewTaskIds());
+                weight, o.bestCandidate(), o.reviewTaskIds());
     }
 
     private String mintHealthId() {
