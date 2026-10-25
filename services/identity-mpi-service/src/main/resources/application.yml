@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: identity-mpi-service
+  datasource:
+    url: ${IDENTITY_DB_URL:jdbc:postgresql://localhost:5432/identity?currentSchema=identity}
+    username: ${IDENTITY_DB_USER:medigraph}
+    password: ${IDENTITY_DB_PASSWORD:medigraph}   # local dev default only
+  flyway:
+    schemas: identity
+    default-schema: identity
+server:
+  port: ${PORT:8081}
+medigraph:
+  security:
+    jwt:
+      jwk-set-uri: ${JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}

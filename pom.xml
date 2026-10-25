@@ -31,6 +31,7 @@
         <module>medigraph-arch-rules</module>
         <module>medigraph-test-support</module>
         <module>services/ledger-service</module>
+        <module>services/identity-mpi-service</module>
     </modules>
 
     <properties>
