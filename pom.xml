@@ -27,6 +27,7 @@
         <module>medigraph-prescription</module>
         <module>medigraph-icu</module>
         <module>medigraph-beds</module>
+        <module>medigraph-platform</module>
     </modules>
 
     <properties>

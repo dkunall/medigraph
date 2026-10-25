@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Shared by every service (shipped in medigraph-platform). Profile "json": one JSON object per line with
+     service, level, logger, message, correlationId, traceId, spanId (all MDC keys). Otherwise a readable line
+     that still shows the correlation and trace ids. Containers run with SPRING_PROFILES_ACTIVE including json. -->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <springProperty scope="context" name="SERVICE" source="spring.application.name" defaultValue="medigraph"/>
+
+    <springProfile name="json">
+        <appender name="OUT" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service":"${SERVICE}"}</customFields>
+                <fieldNames><levelValue>[ignore]</levelValue></fieldNames>
+                <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                    <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                    <rootCauseFirst>true</rootCauseFirst>
+                </throwableConverter>
+            </encoder>
+        </appender>
+    </springProfile>
+    <springProfile name="!json">
+        <appender name="OUT" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %-5level [${SERVICE}] [cid=%X{correlationId:-} trace=%X{traceId:-}] %logger{30} - %msg%n</pattern>
+            </encoder>
+        </appender>
+    </springProfile>
+
+    <logger name="org.apache.kafka" level="WARN"/>
+    <logger name="io.zonky" level="WARN"/>
+    <logger name="org.flywaydb" level="WARN"/>
+    <root level="INFO">
+        <appender-ref ref="OUT"/>
+    </root>
+</configuration>

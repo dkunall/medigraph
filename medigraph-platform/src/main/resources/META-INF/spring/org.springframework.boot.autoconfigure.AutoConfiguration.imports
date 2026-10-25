@@ -1,0 +1,4 @@
+com.medigraph.platform.security.PlatformSecurityAutoConfiguration
+com.medigraph.platform.web.PlatformWebAutoConfiguration
+com.medigraph.platform.http.PlatformHttpAutoConfiguration
+com.medigraph.platform.outbox.PlatformPersistenceAutoConfiguration
