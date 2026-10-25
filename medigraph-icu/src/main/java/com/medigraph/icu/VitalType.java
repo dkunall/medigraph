@@ -1,0 +1,5 @@
+package com.medigraph.icu;
+
+public enum VitalType {
+    RESPIRATION_RATE, SPO2, SUPPLEMENTAL_O2, SYSTOLIC_BP, PULSE, CONSCIOUSNESS, TEMPERATURE
+}

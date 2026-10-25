@@ -25,6 +25,7 @@
         <module>medigraph-ledger</module>
         <module>medigraph-consent</module>
         <module>medigraph-prescription</module>
+        <module>medigraph-icu</module>
     </modules>
 
     <properties>
