@@ -46,4 +46,9 @@ public final class ClientCredentialsTokenProvider implements ServiceTokenProvide
         }
         return cached;
     }
+
+    @Override
+    public synchronized void invalidate() {
+        cached = null;
+    }
 }

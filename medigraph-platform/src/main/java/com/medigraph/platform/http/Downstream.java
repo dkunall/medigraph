@@ -62,6 +62,24 @@ public final class Downstream {
         // resolve caller-bound values on the calling thread (security context, MDC)
         Optional<String> bearer = tokens.bearer();
         String cid = MDC.get(CorrelationIdFilter.MDC_KEY);
+        try {
+            return attempt(method, uri, body, type, idempotencyKey, bearer, cid, vars);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401 && tokens.renewAfterRejection()) {
+                // our own cached service token went stale (e.g. the issuer rotated its key): one retry with a fresh one.
+                // A 401 means the request was not processed, so repeating it is safe for any method.
+                try {
+                    return attempt(method, uri, body, type, idempotencyKey, tokens.bearer(), cid, vars);
+                } catch (HttpClientErrorException again) {
+                    throw translate(again);
+                }
+            }
+            throw translate(e);
+        }
+    }
+
+    private <T> T attempt(HttpMethod method, String uri, Object body, Class<T> type, String idempotencyKey,
+                          Optional<String> bearer, String cid, Object... vars) {
         Supplier<T> once = () -> {
             RestClient.RequestBodySpec spec = client.method(method).uri(uri, vars).headers(h -> {
                 bearer.ifPresent(h::setBearerAuth);
@@ -82,10 +100,10 @@ public final class Downstream {
         Supplier<T> attempt = safeToRepeat ? Retry.decorateSupplier(retry, guarded) : guarded;
         try {
             return attempt.get();
-        } catch (HttpClientErrorException e) {
-            throw translate(e);
         } catch (CallNotPermittedException e) {
             throw new UpstreamUnavailableException(name + " circuit is open", e);
+        } catch (HttpClientErrorException e) {
+            throw e;
         } catch (RestClientException e) {
             throw new UpstreamUnavailableException(name + " unavailable: " + e.getMessage(), e);
         }
