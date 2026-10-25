@@ -20,6 +20,7 @@
 
     <modules>
         <module>medigraph-common</module>
+        <module>medigraph-crypto</module>
     </modules>
 
     <properties>
