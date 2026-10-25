@@ -23,6 +23,7 @@
         <module>medigraph-crypto</module>
         <module>medigraph-mpi</module>
         <module>medigraph-ledger</module>
+        <module>medigraph-consent</module>
     </modules>
 
     <properties>
