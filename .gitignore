@@ -28,3 +28,6 @@ logs/
 *.pem
 *.key
 /data/
+
+# local run (scripts/local/start.sh)
+/.run/
