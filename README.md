@@ -20,12 +20,14 @@ clinical advice.
 | | Status |
 |---|---|
 | Build, unit tests, ArchUnit rules, Spring Boot tests on embedded PostgreSQL | passing (see [Tests](#tests)) |
-| JWT auth with roles, 401/403, problem+json errors, idempotency keys, outbox, gateway routing and rate limits | covered by HTTP-level tests |
-| 3-node Raft ledger surviving node restarts, with state in PostgreSQL | `LedgerClusterRecoveryTest` |
-| Envelope encryption, KEK rotation, crypto-shredding | `RecordsServiceTest`, `KeyRotationTest` |
-| Kafka Streams on a real broker, Redis hold store, PostGIS KNN | Testcontainers tests written, but they skip without Docker and I haven't run them yet |
-| `docker-compose.yml` and the Dockerfiles | written, not started yet |
-| Throughput and latency | not measured; the k6 scripts in `load/` haven't been run |
+| Kafka Streams on a real broker, Redis hold store, PostGIS KNN | Testcontainers tests ran against real containers and pass |
+| Whole stack over real HTTP: PostGIS, Kafka and Redis in Docker, the ten service JVMs on the host, every call through the gateway | run end to end with [`scripts/local`](scripts/local); the captured run is in [docs/patient-journey.md](docs/patient-journey.md) |
+| Killing the Raft leader mid-run | a new leader took over in under a second, the next write was sealed and verified, and the old leader caught up when it came back |
+| Last-bed race | 10 concurrent holds on one free bed: one 201, nine 409 |
+| Crypto-shredding | after erasure the record and its verification return 410, the ledger chain still verifies, the key row is gone and a tombstone is left |
+| Postman collection | [docs/postman](docs/postman), 49 requests and 73 checks green under newman |
+| The app tier inside `docker compose` (all services as containers) | not verified. On the box I used, container-to-container traffic on the bridge network timed out, so only the infra containers ran |
+| Throughput and latency | one small read-only run on a shared box, see [docs/benchmark.md](docs/benchmark.md). Writes and the k6 scripts in `load/` haven't been run |
 
 ## Architecture
 
@@ -84,7 +86,7 @@ There's more detail in [docs/architecture.md](docs/architecture.md), and the mai
 
 ## Running it
 
-You need JDK 21 and Maven 3.9. Docker is only needed for compose and the container tests.
+You need JDK 21 and Maven 3.9. Docker is needed for compose, the container tests and the local scripts below.
 
 ```bash
 mvn install                     # build and test; container tests skip without Docker
@@ -96,10 +98,39 @@ TOKEN=$(curl -s -XPOST localhost:8080/dev/token -H 'content-type: application/js
 curl -s "localhost:8080/api/v1/beds/nearest?lat=12.97&lon=77.59" -H "authorization: Bearer $TOKEN"
 ```
 
-I haven't run the compose stack end to end yet, so expect some rough edges there.
+I haven't seen the full compose stack come up yet (see the table above), so there may be rough edges there.
+
+The route I have run end to end keeps the infra in Docker and starts the services as plain JVMs on the host:
+
+```bash
+mvn -DskipTests install
+scripts/local/start.sh all        # PostGIS :55432, Redis :6379, Kafka :9092, then the ten JVMs on 8080-8089
+scripts/local/demo.sh --fresh     # wipes local data, restarts, runs the whole scenario through the gateway
+scripts/local/start.sh stopall    # stop the JVMs (start.sh down also removes the containers)
+```
+
+Logs and pid files go to `.run/` (git-ignored). `demo.sh` writes `demo-output.txt` (every exchange) and
+`patient-journey.md` to the current directory. It needs Python 3 with `requests`. The scenario covers registration
+and MPI review, consent, an encrypted record and its Merkle proof, a ledger leader kill, break-glass from a second
+hospital, an interaction alert after a typo correction, a NEWS2 alert, the nearest ICU bed and a race on the last
+one, crypto-shredding, and 401/403.
 
 Each service serves OpenAPI at `/v3/api-docs` and `/swagger-ui.html`. Metrics are at `/actuator/prometheus`, and the
 liveness and readiness probes are at `/actuator/health/liveness` and `/actuator/health/readiness`.
+
+### Postman
+
+Import `docs/postman/MediGraph.postman_collection.json` and `docs/postman/MediGraph.local.postman_environment.json`
+(File → Import), pick the "MediGraph local" environment and run the collection top to bottom. The first folder
+gets dev tokens from the gateway, and later requests pick up the ids and tokens earlier ones saved, so run the
+folders in order. The environment only holds `baseUrl` (`http://localhost:8080`).
+
+From the command line:
+
+```bash
+npx newman run docs/postman/MediGraph.postman_collection.json \
+  -e docs/postman/MediGraph.local.postman_environment.json
+```
 
 ## Security
 
@@ -132,32 +163,32 @@ liveness and readiness probes are at `/actuator/health/liveness` and `/actuator/
 
 ## Tests
 
-From the last clean `mvn -o install`, on a machine without Docker: **341 run, 336 passed, 5 skipped, 0 failures**.
+From the last clean `mvn -o install`, with Docker available: **346 run, 346 passed, 0 skipped, 0 failures**.
 
 | Module | Run | Skipped |
 |---|---:|---:|
 | medigraph-common | 27 | 0 |
 | medigraph-crypto | 13 | 0 |
-| medigraph-platform | 10 | 0 |
+| medigraph-platform | 12 | 0 |
 | medigraph-arch-rules | 4 | 0 |
 | medigraph-mpi | 47 | 0 |
 | medigraph-consent | 9 | 0 |
 | medigraph-ledger | 52 | 0 |
 | medigraph-prescription | 30 | 0 |
-| medigraph-icu | 69 | 1 |
+| medigraph-icu | 69 | 0 |
 | medigraph-beds | 20 | 0 |
-| api-gateway | 16 | 0 |
+| api-gateway | 19 | 0 |
 | identity-mpi-service | 5 | 0 |
 | records-service | 6 | 0 |
 | consent-service | 7 | 0 |
 | prescription-service | 6 | 0 |
 | ledger-service | 4 | 0 |
 | icu-service | 6 | 0 |
-| beds-service | 10 | 4 |
+| beds-service | 10 | 0 |
 
-The skipped ones are the Testcontainers tests (`KafkaStreamsVitalsProcessorContainerTest`,
-`RedisHoldStoreContainerTest`, `PostgisHospitalLocatorContainerTest`). They use `disabledWithoutDocker = true`.
-Anything that needs a database uses embedded PostgreSQL (zonky).
+Five of these are Testcontainers tests (`KafkaStreamsVitalsProcessorContainerTest`, `RedisHoldStoreContainerTest`,
+`PostgisHospitalLocatorContainerTest`). They use `disabledWithoutDocker = true`, so without Docker they're
+skipped and the count drops to 341. Anything else that needs a database uses embedded PostgreSQL (zonky).
 
 ## Algorithms and data structures
 
@@ -205,10 +236,12 @@ Anything that needs a database uses embedded PostgreSQL (zonky).
 
 ## Not done yet / known gaps
 
-- The Kafka, Redis and PostGIS adapters have only been exercised by the (skipped) container tests, and compose
-  hasn't been started.
-- Raft has no snapshots, log compaction, membership changes or pre-vote. The gateway always sends ledger traffic
-  to `ledger1`, and followers redirect writes to the leader.
+- The app tier hasn't run inside compose yet (see the table at the top).
+- Raft has no snapshots, log compaction, membership changes or pre-vote. Without pre-vote the term climbs a few
+  times while the cluster starts. The gateway takes a list of ledger URLs and moves to the next one when a node
+  stops answering. Followers redirect writes to the leader.
+- If the gateway is down, services can't fetch its JWKS and answer 500 instead of 401.
+- 400s produced by Spring itself (bad JSON, for example) don't carry the correlation id in the body yet.
 - Rate limits live in each gateway instance's memory. Several replicas would need a shared store.
 - The dev issuer's key changes on every restart, so tokens are invalidated.
 - In beds, the outbox event and the Redis hold aren't atomic. All shards share one database.
