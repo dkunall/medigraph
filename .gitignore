@@ -1,0 +1,30 @@
+# build
+target/
+*.class
+dependency-reduced-pom.xml
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+logs/
+
+# local env / secrets
+.env
+.env.*
+*.local.yml
+*.pem
+*.key
+/data/

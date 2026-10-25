@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.medigraph</groupId>
+    <artifactId>medigraph-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>medigraph-parent</name>
+    <description>MediGraph: consent-first health record exchange (modular monolith, Maven multi-module)</description>
+
+
+    <properties>
+        <!-- embedded-postgres pulls commons-compress 1.28, which needs commons-lang3 >= 3.18 (Boot 3.3 pins 3.14) -->
+        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <java.version>21</java.version>
+        <embedded-postgres.version>2.2.2</embedded-postgres.version>
+        <embedded-postgres-binaries.version>17.11.0</embedded-postgres-binaries.version>
+        <resilience4j.version>2.2.0</resilience4j.version>
+        <springdoc.version>2.6.0</springdoc.version>
+        <logstash-logback.version>7.4</logstash-logback.version>
+        <archunit.version>1.3.0</archunit.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-common</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-mpi</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-ledger</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-consent</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-prescription</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-icu</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-beds</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-crypto</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-platform</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-arch-rules</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-test-support</artifactId><version>${project.version}</version></dependency>
+            <dependency><groupId>io.github.resilience4j</groupId><artifactId>resilience4j-circuitbreaker</artifactId><version>${resilience4j.version}</version></dependency>
+            <dependency><groupId>io.github.resilience4j</groupId><artifactId>resilience4j-retry</artifactId><version>${resilience4j.version}</version></dependency>
+            <dependency><groupId>io.github.resilience4j</groupId><artifactId>resilience4j-micrometer</artifactId><version>${resilience4j.version}</version></dependency>
+            <dependency><groupId>org.springdoc</groupId><artifactId>springdoc-openapi-starter-webmvc-ui</artifactId><version>${springdoc.version}</version></dependency>
+            <dependency><groupId>net.logstash.logback</groupId><artifactId>logstash-logback-encoder</artifactId><version>${logstash-logback.version}</version></dependency>
+            <dependency><groupId>com.tngtech.archunit</groupId><artifactId>archunit-junit5</artifactId><version>${archunit.version}</version></dependency>
+            <dependency>
+                <groupId>io.zonky.test.postgres</groupId>
+                <artifactId>embedded-postgres-binaries-bom</artifactId>
+                <version>${embedded-postgres-binaries.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.zonky.test</groupId>
+                <artifactId>embedded-postgres</artifactId>
+                <version>${embedded-postgres.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- every module gets JUnit 5 + AssertJ -->
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <trimStackTrace>false</trimStackTrace>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
