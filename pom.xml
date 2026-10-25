@@ -22,6 +22,7 @@
         <module>medigraph-common</module>
         <module>medigraph-crypto</module>
         <module>medigraph-mpi</module>
+        <module>medigraph-ledger</module>
     </modules>
 
     <properties>
