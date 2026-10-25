@@ -24,6 +24,7 @@
         <module>medigraph-mpi</module>
         <module>medigraph-ledger</module>
         <module>medigraph-consent</module>
+        <module>medigraph-prescription</module>
     </modules>
 
     <properties>

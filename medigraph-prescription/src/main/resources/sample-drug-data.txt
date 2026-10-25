@@ -1,0 +1,84 @@
+# =====================================================================================================
+#  SAMPLE DATA FOR SOFTWARE DEMONSTRATION ONLY. NOT CLINICAL ADVICE. NOT A COMPLETE OR VALIDATED SOURCE.
+#  A small, hand-picked set of widely documented interaction pairs used to exercise the algorithms.
+#  A real deployment would license a curated knowledge base and map drugs to RxNorm codes.
+# =====================================================================================================
+# DRUG|name|class[,class...]
+DRUG|metformin|biguanide,antidiabetic
+DRUG|glimepiride|sulfonylurea,antidiabetic
+DRUG|amoxicillin|penicillin,beta-lactam,antibiotic
+DRUG|ampicillin|penicillin,beta-lactam,antibiotic
+DRUG|cephalexin|cephalosporin,beta-lactam,antibiotic
+DRUG|azithromycin|macrolide,antibiotic
+DRUG|clarithromycin|macrolide,antibiotic
+DRUG|ciprofloxacin|fluoroquinolone,antibiotic
+DRUG|levofloxacin|fluoroquinolone,antibiotic
+DRUG|trimethoprim|antifolate,antibiotic
+DRUG|sulfamethoxazole|sulfonamide,antibiotic
+DRUG|aspirin|nsaid,salicylate,antiplatelet
+DRUG|ibuprofen|nsaid
+DRUG|naproxen|nsaid
+DRUG|diclofenac|nsaid
+DRUG|paracetamol|analgesic
+DRUG|tramadol|opioid
+DRUG|morphine|opioid
+DRUG|warfarin|anticoagulant
+DRUG|apixaban|anticoagulant
+DRUG|clopidogrel|antiplatelet
+DRUG|simvastatin|statin
+DRUG|atorvastatin|statin
+DRUG|rosuvastatin|statin
+DRUG|amlodipine|calcium-channel-blocker
+DRUG|lisinopril|ace-inhibitor
+DRUG|enalapril|ace-inhibitor
+DRUG|losartan|arb
+DRUG|spironolactone|potassium-sparing-diuretic
+DRUG|furosemide|loop-diuretic
+DRUG|metoprolol|beta-blocker
+DRUG|atenolol|beta-blocker
+DRUG|digoxin|cardiac-glycoside
+DRUG|amiodarone|antiarrhythmic
+DRUG|nitroglycerin|nitrate
+DRUG|sildenafil|pde5-inhibitor
+DRUG|omeprazole|ppi
+DRUG|pantoprazole|ppi
+DRUG|sertraline|ssri
+DRUG|fluoxetine|ssri
+DRUG|lithium|mood-stabilizer
+DRUG|levothyroxine|thyroid-hormone
+DRUG|calcium carbonate|antacid
+DRUG|methotrexate|antifolate,dmard
+DRUG|theophylline|methylxanthine
+DRUG|prednisolone|corticosteroid
+DRUG|salbutamol|beta-agonist
+# INTERACTION|drugA|drugB|MINOR/MODERATE/MAJOR/CONTRAINDICATED|short description
+INTERACTION|warfarin|aspirin|MAJOR|additive bleeding risk
+INTERACTION|warfarin|ibuprofen|MAJOR|additive bleeding risk, GI bleeding
+INTERACTION|warfarin|naproxen|MAJOR|additive bleeding risk, GI bleeding
+INTERACTION|warfarin|amiodarone|MAJOR|amiodarone raises INR
+INTERACTION|warfarin|clarithromycin|MAJOR|macrolide raises INR
+INTERACTION|apixaban|aspirin|MAJOR|additive bleeding risk
+INTERACTION|clopidogrel|omeprazole|MODERATE|reduced antiplatelet activation
+INTERACTION|sildenafil|nitroglycerin|CONTRAINDICATED|severe hypotension
+INTERACTION|simvastatin|clarithromycin|CONTRAINDICATED|rhabdomyolysis risk
+INTERACTION|atorvastatin|clarithromycin|MAJOR|myopathy risk
+INTERACTION|simvastatin|amlodipine|MODERATE|raised statin exposure, limit dose
+INTERACTION|simvastatin|amiodarone|MAJOR|myopathy risk
+INTERACTION|lisinopril|spironolactone|MAJOR|hyperkalaemia
+INTERACTION|enalapril|spironolactone|MAJOR|hyperkalaemia
+INTERACTION|losartan|spironolactone|MAJOR|hyperkalaemia
+INTERACTION|sertraline|tramadol|MAJOR|serotonin syndrome, seizure risk
+INTERACTION|fluoxetine|tramadol|MAJOR|serotonin syndrome, seizure risk
+INTERACTION|ciprofloxacin|theophylline|MAJOR|theophylline toxicity
+INTERACTION|digoxin|amiodarone|MAJOR|digoxin toxicity
+INTERACTION|methotrexate|trimethoprim|MAJOR|bone marrow suppression
+INTERACTION|lithium|ibuprofen|MAJOR|lithium toxicity
+INTERACTION|lithium|lisinopril|MAJOR|lithium toxicity
+INTERACTION|levothyroxine|calcium carbonate|MINOR|reduced absorption, separate doses
+INTERACTION|metformin|furosemide|MINOR|monitor glucose and renal function
+INTERACTION|aspirin|ibuprofen|MODERATE|ibuprofen may blunt aspirin cardioprotection
+INTERACTION|metoprolol|amiodarone|MODERATE|bradycardia
+INTERACTION|morphine|tramadol|MAJOR|additive CNS and respiratory depression
+# CROSS|allergen class|drug class|severity|description  (allergy cross-reactivity)
+CROSS|penicillin|cephalosporin|MODERATE|possible beta-lactam cross-reactivity
+CROSS|nsaid|salicylate|MAJOR|NSAID-exacerbated respiratory disease
