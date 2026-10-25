@@ -72,7 +72,11 @@ public final class HttpRaftTransport implements RaftTransport, AutoCloseable {
                     .header("Authorization", "Bearer " + tokens.token())
                     .POST(HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(wire))).build();
             HttpResponse<Void> res = http.send(req, HttpResponse.BodyHandlers.discarding());
-            if (res.statusCode() >= 300) {
+            if (res.statusCode() == 401) {
+                // the peer no longer accepts our cached token (issuer key rotated): fetch a new one for the next send
+                tokens.invalidate();
+                log.warn("raft {} to {} rejected our token; renewing it", wire.type(), wire.to());
+            } else if (res.statusCode() >= 300) {
                 log.debug("raft {} to {} answered {}", wire.type(), wire.to(), res.statusCode());
             }
         } catch (InterruptedException e) {
