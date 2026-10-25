@@ -6,9 +6,6 @@ import com.medigraph.icu.stream.StreamConfig;
 import com.medigraph.icu.stream.VitalReading;
 import com.medigraph.icu.stream.Vitals;
 import com.medigraph.icu.stream.WindowScore;
-import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -16,7 +13,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -36,10 +32,7 @@ class KafkaStreamsVitalsProcessorContainerTest {
 
     @Test
     void highRiskWindowIsScoredThroughTheBroker() throws Exception {
-        try (Admin admin = Admin.create(Map.of(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers()))) {
-            admin.createTopics(List.of(new NewTopic("vitals", 3, (short) 1), new NewTopic("news2-scores", 3, (short) 1),
-                    new NewTopic("news2-alerts", 3, (short) 1))).all().get(30, TimeUnit.SECONDS);
-        }
+        // no topics are pre-created: start() has to create them, as it does against a fresh broker in compose
         List<WindowScore> seen = new CopyOnWriteArrayList<>();
         long t0 = System.currentTimeMillis() / (5 * MIN) * (5 * MIN) - 60 * MIN;
         try (KafkaStreamsVitalsProcessor p = new KafkaStreamsVitalsProcessor(KAFKA.getBootstrapServers(), "news2-it",

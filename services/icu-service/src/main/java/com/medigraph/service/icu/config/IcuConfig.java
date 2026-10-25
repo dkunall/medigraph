@@ -14,6 +14,8 @@ import com.medigraph.service.icu.adapter.out.persistence.JdbcAlertRepository;
 import com.medigraph.service.icu.application.AlertRecorder;
 import com.medigraph.service.icu.application.VitalsIngestion;
 import com.medigraph.service.icu.application.port.out.PatientResolver;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,6 +42,12 @@ public class IcuConfig {
             }
             default -> throw new IllegalStateException("medigraph.icu.processor must be kafka or in-memory");
         };
+    }
+
+    /** Readiness: DOWN if the stream processor has stopped, so traffic isn't accepted into a dead pipeline. */
+    @Bean
+    HealthIndicator vitalsStream(VitalsStreamProcessor processor) {
+        return () -> processor.healthy() ? Health.up().build() : Health.down().withDetail("reason", "stream processor stopped").build();
     }
 
     @Bean

@@ -4,11 +4,15 @@ import com.medigraph.icu.stream.StreamConfig;
 import com.medigraph.icu.stream.VitalReading;
 import com.medigraph.icu.stream.VitalsStreamProcessor;
 import com.medigraph.icu.stream.WindowScore;
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
@@ -16,8 +20,12 @@ import org.apache.kafka.streams.StreamsConfig;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -27,6 +35,10 @@ import java.util.function.Consumer;
  */
 public final class KafkaStreamsVitalsProcessor implements VitalsStreamProcessor {
 
+    private static final List<String> TOPICS = List.of("vitals", "news2-scores", "news2-alerts");
+    private static final int PARTITIONS = 3;
+
+    private final String bootstrapServers;
     private final KafkaProducer<String, VitalReading> producer;
     private final KafkaStreams streams;
     private final String inputTopic;
@@ -35,7 +47,8 @@ public final class KafkaStreamsVitalsProcessor implements VitalsStreamProcessor 
     private volatile boolean running = true;
 
     public KafkaStreamsVitalsProcessor(String bootstrapServers, String applicationId, StreamConfig cfg) {
-        this.inputTopic = "vitals";
+        this.bootstrapServers = bootstrapServers;
+        this.inputTopic = TOPICS.get(0);
         Properties sp = new Properties();
         sp.put(StreamsConfig.APPLICATION_ID_CONFIG, applicationId);
         sp.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -65,8 +78,37 @@ public final class KafkaStreamsVitalsProcessor implements VitalsStreamProcessor 
     }
 
     public void start() {
+        ensureTopics();
         streams.start();
         relay.start();
+    }
+
+    /**
+     * Kafka Streams shuts the whole client down if a source topic is missing when it first rebalances, and broker
+     * auto-creation only happens on the first produce. So the topics are created up front; existing ones are left alone.
+     */
+    private void ensureTopics() {
+        try (Admin admin = Admin.create(Map.of(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers))) {
+            for (String topic : TOPICS) {
+                try {
+                    admin.createTopics(List.of(new NewTopic(topic, PARTITIONS, (short) 1))).all().get(30, TimeUnit.SECONDS);
+                } catch (ExecutionException e) {
+                    if (!(e.getCause() instanceof TopicExistsException)) {
+                        throw new IllegalStateException("could not create topic " + topic, e.getCause());
+                    }
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("interrupted while creating topics", e);
+        } catch (TimeoutException e) {
+            throw new IllegalStateException("broker at " + bootstrapServers + " did not answer within 30s", e);
+        }
+    }
+
+    @Override
+    public boolean healthy() {
+        return streams.state().isRunningOrRebalancing() || streams.state() == KafkaStreams.State.CREATED;
     }
 
     @Override

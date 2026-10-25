@@ -12,6 +12,11 @@ public interface VitalsStreamProcessor extends AutoCloseable {
 
     void subscribe(Consumer<WindowScore> listener);
 
+    /** False once the pipeline has stopped processing (e.g. the Kafka Streams client shut down). */
+    default boolean healthy() {
+        return true;
+    }
+
     @Override
     default void close() {
     }
