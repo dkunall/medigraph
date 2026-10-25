@@ -32,6 +32,7 @@
         <module>medigraph-test-support</module>
         <module>services/ledger-service</module>
         <module>services/identity-mpi-service</module>
+        <module>services/consent-service</module>
     </modules>
 
     <properties>

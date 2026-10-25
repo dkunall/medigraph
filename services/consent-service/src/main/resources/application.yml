@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: consent-service
+  datasource:
+    url: ${CONSENT_DB_URL:jdbc:postgresql://localhost:5432/consent?currentSchema=consent}
+    username: ${CONSENT_DB_USER:medigraph}
+    password: ${CONSENT_DB_PASSWORD:medigraph}   # local dev default only
+  flyway:
+    schemas: consent
+    default-schema: consent
+server:
+  port: ${PORT:8083}
+medigraph:
+  consent:
+    signing-key-path: ${CONSENT_SIGNING_KEY_PATH:./data/consent-signing-key.pem}
+    generate-key-if-missing: ${CONSENT_GENERATE_KEY:true}   # set false in production; mount the PEM from a secret store
+    identity-url: ${IDENTITY_URL:http://localhost:8081}
+  ledger:
+    nodes: ${LEDGER_NODES:http://localhost:8085,http://localhost:8086,http://localhost:8087}
+  security:
+    jwt:
+      jwk-set-uri: ${JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}
+    client:
+      id: consent-service
+      secret: ${OAUTH_CLIENT_SECRET:dev-only-consent-secret}   # dev default, matches the gateway's dev issuer
+      token-uri: ${TOKEN_URI:http://localhost:8080/oauth2/token}
