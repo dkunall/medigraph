@@ -18,6 +18,9 @@
     <name>medigraph-parent</name>
     <description>MediGraph: consent-first health record exchange (modular monolith, Maven multi-module)</description>
 
+    <modules>
+        <module>medigraph-common</module>
+    </modules>
 
     <properties>
         <!-- embedded-postgres pulls commons-compress 1.28, which needs commons-lang3 >= 3.18 (Boot 3.3 pins 3.14) -->
