@@ -37,6 +37,7 @@
         <module>services/prescription-service</module>
         <module>services/icu-service</module>
         <module>services/beds-service</module>
+        <module>services/api-gateway</module>
     </modules>
 
     <properties>

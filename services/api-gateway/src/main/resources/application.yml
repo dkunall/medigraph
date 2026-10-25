@@ -1,0 +1,51 @@
+server:
+  port: ${PORT:8080}
+spring:
+  application:
+    name: api-gateway
+medigraph:
+  security:
+    jwt:
+      # used only when the dev issuer is disabled (production: the IdP's JWKS)
+      jwk-set-uri: ${JWK_SET_URI:}
+  gateway:
+    response-timeout: 5s
+    max-body-bytes: 1048576
+    rate-limit:
+      capacity: ${RATE_LIMIT_BURST:100}
+      refill-per-second: ${RATE_LIMIT_PER_SECOND:50}
+      max-clients: 10000
+    dev-issuer:
+      enabled: ${GATEWAY_DEV_ISSUER:false}   # true only in docker-compose / local runs
+      clients:                               # dev-only secrets, identical to the services' local defaults
+        consent-service: ${CONSENT_CLIENT_SECRET:dev-only-consent-secret}
+        records-service: ${RECORDS_CLIENT_SECRET:dev-only-records-secret}
+        ledger-service: ${LEDGER_CLIENT_SECRET:dev-only-ledger-secret}
+        icu-service: ${ICU_CLIENT_SECRET:dev-only-icu-secret}
+    services:
+      identity: ${IDENTITY_URL:http://localhost:8081}
+      records: ${RECORDS_URL:http://localhost:8082}
+      consent: ${CONSENT_URL:http://localhost:8083}
+      prescription: ${PRESCRIPTION_URL:http://localhost:8084}
+      ledger: ${LEDGER_URL:http://localhost:8085}
+      icu: ${ICU_URL:http://localhost:8088}
+      beds: ${BEDS_URL:http://localhost:8089}
+    routes:
+      - { pattern: /api/v1/patients, service: identity }
+      - { pattern: /api/v1/mpi, service: identity }
+      - { pattern: /api/v1/patients/*/consents, service: consent }
+      - { pattern: /api/v1/patients/*/notifications, service: consent }
+      - { pattern: /api/v1/patients/*/break-glass, service: consent }
+      - { pattern: /api/v1/consents, service: consent }
+      - { pattern: /api/v1/consent-keys, service: consent }
+      - { pattern: /api/v1/patients/*/records, service: records }
+      - { pattern: /api/v1/patients/*/data, service: records }
+      - { pattern: /api/v1/records, service: records }
+      - { pattern: /api/v1/admin/keys, service: records }
+      - { pattern: /api/v1/patients/*/prescriptions, service: prescription }
+      - { pattern: /api/v1/prescriptions, service: prescription }
+      - { pattern: /api/v1/drugs, service: prescription }
+      - { pattern: /api/v1/ledger, service: ledger }
+      - { pattern: /api/v1/icu, service: icu }
+      - { pattern: /api/v1/hospitals, service: beds }
+      - { pattern: /api/v1/beds, service: beds }
