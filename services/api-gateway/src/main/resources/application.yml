@@ -27,7 +27,7 @@ medigraph:
       records: ${RECORDS_URL:http://localhost:8082}
       consent: ${CONSENT_URL:http://localhost:8083}
       prescription: ${PRESCRIPTION_URL:http://localhost:8084}
-      ledger: ${LEDGER_URL:http://localhost:8085}
+      ledger: ${LEDGER_URL:http://localhost:8085,http://localhost:8086,http://localhost:8087}   # Raft replicas
       icu: ${ICU_URL:http://localhost:8088}
       beds: ${BEDS_URL:http://localhost:8089}
     routes:

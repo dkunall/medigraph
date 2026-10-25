@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @param services   logical service name → base URL
+ * @param services   logical service name → base URL, or a comma-separated list of replica URLs
  * @param routes     path pattern → service (see {@code PathTrie} for matching)
  */
 @ConfigurationProperties("medigraph.gateway")

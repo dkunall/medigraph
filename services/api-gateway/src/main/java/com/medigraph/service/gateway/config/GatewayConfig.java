@@ -30,7 +30,9 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -46,8 +48,9 @@ public class GatewayConfig {
 
     @Bean
     Upstream upstream(GatewayProperties p, HttpProperties http, CircuitBreakerRegistry breakers, RetryRegistry retries) {
-        Map<String, URI> services = new LinkedHashMap<>();
-        Objects.requireNonNull(p.services(), "medigraph.gateway.services").forEach((k, v) -> services.put(k, URI.create(v)));
+        Map<String, List<URI>> services = new LinkedHashMap<>();
+        Objects.requireNonNull(p.services(), "medigraph.gateway.services").forEach((k, v) -> services.put(k,
+                Arrays.stream(v.split(",")).map(String::trim).filter(s -> !s.isEmpty()).map(URI::create).toList()));
         HttpClient client = HttpClient.newBuilder().connectTimeout(http.connectTimeout())
                 .version(HttpClient.Version.HTTP_1_1).followRedirects(HttpClient.Redirect.NEVER).build();
         return new ResilientHttpUpstream(services, client, p.responseTimeout(), breakers,
