@@ -1,0 +1,254 @@
+# Local MediGraph stack. EVERY credential/key below is a throwaway LOCAL-DEV value published in this repo.
+# Never reuse any of them outside a laptop. Not needed for `mvn test` (tests use embedded PostgreSQL).
+#
+#   mvn -DskipTests package          # builds services/*/target/*.jar
+#   docker compose up --build -d
+#   curl -s -XPOST localhost:8080/dev/token -H 'content-type: application/json' \
+#        -d '{"subject":"dr-1","roles":["DOCTOR"],"facility":"F1"}'
+#
+# The gateway runs its dev issuer (in-memory RS256 key, JWKS at /.well-known/jwks.json); every service validates
+# tokens against that JWKS and gets service tokens via client_credentials. Production replaces it with a real IdP.
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: medigraph
+      POSTGRES_PASSWORD: medigraph-dev
+      POSTGRES_DB: medigraph
+    volumes:
+      - ./deploy/postgres-init.sql:/docker-entrypoint-initdb.d/10-databases.sql:ro
+      - medigraph-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medigraph -d medigraph"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  kafka:
+    image: apache/kafka:3.8.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  redis:
+    image: redis:7.2-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 30
+
+  gateway:
+    build: services/api-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      GATEWAY_DEV_ISSUER: "true"
+      IDENTITY_URL: http://identity:8081
+      RECORDS_URL: http://records:8082
+      CONSENT_URL: http://consent:8083
+      PRESCRIPTION_URL: http://prescription:8084
+      LEDGER_URL: http://ledger1:8085
+      ICU_URL: http://icu:8088
+      BEDS_URL: http://beds:8089
+    ports:
+      - "8080:8080"
+
+  identity:
+    build: services/identity-mpi-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      IDENTITY_DB_URL: jdbc:postgresql://postgres:5432/identity?currentSchema=identity
+      IDENTITY_DB_USER: medigraph
+      IDENTITY_DB_PASSWORD: medigraph-dev
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+  ledger1:
+    build: services/ledger-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      LEDGER_DB_URL: jdbc:postgresql://postgres:5432/ledger1?currentSchema=ledger
+      LEDGER_DB_USER: medigraph
+      LEDGER_DB_PASSWORD: medigraph-dev
+      RAFT_NODE_ID: ledger1
+      MEDIGRAPH_LEDGER_RAFT_PEERS_LEDGER2: http://ledger2:8085
+      MEDIGRAPH_LEDGER_RAFT_PEERS_LEDGER3: http://ledger3:8085
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      TOKEN_URI: http://gateway:8080/oauth2/token
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+  ledger2:
+    build: services/ledger-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      LEDGER_DB_URL: jdbc:postgresql://postgres:5432/ledger2?currentSchema=ledger
+      LEDGER_DB_USER: medigraph
+      LEDGER_DB_PASSWORD: medigraph-dev
+      RAFT_NODE_ID: ledger2
+      MEDIGRAPH_LEDGER_RAFT_PEERS_LEDGER1: http://ledger1:8085
+      MEDIGRAPH_LEDGER_RAFT_PEERS_LEDGER3: http://ledger3:8085
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      TOKEN_URI: http://gateway:8080/oauth2/token
+    ports:
+      - "8086:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+  ledger3:
+    build: services/ledger-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      LEDGER_DB_URL: jdbc:postgresql://postgres:5432/ledger3?currentSchema=ledger
+      LEDGER_DB_USER: medigraph
+      LEDGER_DB_PASSWORD: medigraph-dev
+      RAFT_NODE_ID: ledger3
+      MEDIGRAPH_LEDGER_RAFT_PEERS_LEDGER1: http://ledger1:8085
+      MEDIGRAPH_LEDGER_RAFT_PEERS_LEDGER2: http://ledger2:8085
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      TOKEN_URI: http://gateway:8080/oauth2/token
+    ports:
+      - "8087:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+  consent:
+    build: services/consent-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      CONSENT_DB_URL: jdbc:postgresql://postgres:5432/consent?currentSchema=consent
+      CONSENT_DB_USER: medigraph
+      CONSENT_DB_PASSWORD: medigraph-dev
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      TOKEN_URI: http://gateway:8080/oauth2/token
+      LEDGER_NODES: http://ledger1:8085,http://ledger2:8085,http://ledger3:8085
+      IDENTITY_URL: http://identity:8081
+      CONSENT_SIGNING_KEY_PATH: /data/consent-signing-key.pem
+      CONSENT_GENERATE_KEY: "true"
+    ports:
+      - "8083:8083"
+    volumes:
+      - consent-keys:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+  records:
+    build: services/records-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      RECORDS_DB_URL: jdbc:postgresql://postgres:5432/records?currentSchema=records
+      RECORDS_DB_USER: medigraph
+      RECORDS_DB_PASSWORD: medigraph-dev
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      TOKEN_URI: http://gateway:8080/oauth2/token
+      LEDGER_NODES: http://ledger1:8085,http://ledger2:8085,http://ledger3:8085
+      IDENTITY_URL: http://identity:8081
+      CONSENT_URL: http://consent:8083
+      KEK_SOURCE: env
+      MEDIGRAPH_KEK_DEV1: ZGV2LW9ubHkta2VrLW5vdC1hLXNlY3JldC0wMDAwMDA=   # dev-only KEK, published
+      MEDIGRAPH_KEK_CURRENT: dev1
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+  prescription:
+    build: services/prescription-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      PRESCRIPTION_DB_URL: jdbc:postgresql://postgres:5432/prescription?currentSchema=prescription
+      PRESCRIPTION_DB_USER: medigraph
+      PRESCRIPTION_DB_PASSWORD: medigraph-dev
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      TOKEN_URI: http://gateway:8080/oauth2/token
+      LEDGER_NODES: http://ledger1:8085,http://ledger2:8085,http://ledger3:8085
+      RECORDS_URL: http://records:8082
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+  icu:
+    build: services/icu-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      ICU_DB_URL: jdbc:postgresql://postgres:5432/icu?currentSchema=icu
+      ICU_DB_USER: medigraph
+      ICU_DB_PASSWORD: medigraph-dev
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      TOKEN_URI: http://gateway:8080/oauth2/token
+      LEDGER_NODES: http://ledger1:8085,http://ledger2:8085,http://ledger3:8085
+      IDENTITY_URL: http://identity:8081
+      ICU_PROCESSOR: kafka
+      KAFKA_BOOTSTRAP: kafka:9092
+    ports:
+      - "8088:8088"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      gateway:
+        condition: service_started
+
+  beds:
+    build: services/beds-service
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      BEDS_DB_URL: jdbc:postgresql://postgres:5432/beds?currentSchema=beds
+      BEDS_DB_USER: medigraph
+      BEDS_DB_PASSWORD: medigraph-dev
+      JWK_SET_URI: http://gateway:8080/.well-known/jwks.json
+      BEDS_LOCATOR: postgis
+      BEDS_HOLD_STORE: redis
+      BEDS_REDIS_HEALTH: "true"
+      BEDS_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/platform,classpath:db/postgis
+      REDIS_HOST: redis
+    ports:
+      - "8089:8089"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+
+volumes:
+  medigraph-pg:
+  consent-keys:
