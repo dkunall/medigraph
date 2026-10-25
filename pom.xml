@@ -34,6 +34,7 @@
         <module>services/identity-mpi-service</module>
         <module>services/consent-service</module>
         <module>services/records-service</module>
+        <module>services/prescription-service</module>
     </modules>
 
     <properties>

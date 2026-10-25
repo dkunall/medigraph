@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: prescription-service
+  datasource:
+    url: ${PRESCRIPTION_DB_URL:jdbc:postgresql://localhost:5432/prescription?currentSchema=prescription}
+    username: ${PRESCRIPTION_DB_USER:medigraph}
+    password: ${PRESCRIPTION_DB_PASSWORD:medigraph}   # local dev default only
+  flyway:
+    schemas: prescription
+    default-schema: prescription
+server:
+  port: ${PORT:8084}
+medigraph:
+  prescription:
+    records-url: ${RECORDS_URL:http://localhost:8082}
+  ledger:
+    nodes: ${LEDGER_NODES:http://localhost:8085,http://localhost:8086,http://localhost:8087}
+  security:
+    jwt:
+      jwk-set-uri: ${JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}
