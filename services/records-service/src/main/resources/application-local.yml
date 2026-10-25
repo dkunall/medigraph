@@ -1,0 +1,8 @@
+# Local development only (SPRING_PROFILES_ACTIVE=local). This KEK protects nothing real: it is published in the repo.
+# Never use it with real patient data; production loads KEKs from env/secret volumes (or a KMS adapter).
+medigraph:
+  records:
+    kek:
+      source: inline
+      current-id: dev-local
+      inline-base64: ZGV2LW9ubHkta2VrLW5vdC1hLXNlY3JldC0wMDAwMDA=

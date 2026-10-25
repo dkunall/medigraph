@@ -33,6 +33,7 @@
         <module>services/ledger-service</module>
         <module>services/identity-mpi-service</module>
         <module>services/consent-service</module>
+        <module>services/records-service</module>
     </modules>
 
     <properties>

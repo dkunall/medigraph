@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: records-service
+  datasource:
+    url: ${RECORDS_DB_URL:jdbc:postgresql://localhost:5432/records?currentSchema=records}
+    username: ${RECORDS_DB_USER:medigraph}
+    password: ${RECORDS_DB_PASSWORD:medigraph}   # local dev default only
+  flyway:
+    schemas: records
+    default-schema: records
+server:
+  port: ${PORT:8082}
+medigraph:
+  records:
+    identity-url: ${IDENTITY_URL:http://localhost:8081}
+    consent-url: ${CONSENT_URL:http://localhost:8083}
+    kek:
+      source: ${KEK_SOURCE:env}        # env | directory | inline (inline = local dev only, see application-local.yml)
+      directory: ${KEK_DIRECTORY:}
+      current-id: ${KEK_CURRENT_ID:}
+  ledger:
+    nodes: ${LEDGER_NODES:http://localhost:8085,http://localhost:8086,http://localhost:8087}
+  security:
+    jwt:
+      jwk-set-uri: ${JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}
+    client:
+      id: records-service
+      secret: ${OAUTH_CLIENT_SECRET:dev-only-records-secret}   # dev default, matches the gateway's dev issuer
+      token-uri: ${TOKEN_URI:http://localhost:8080/oauth2/token}
