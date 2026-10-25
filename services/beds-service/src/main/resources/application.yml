@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: beds-service
+  datasource:
+    url: ${BEDS_DB_URL:jdbc:postgresql://localhost:5432/beds?currentSchema=beds}
+    username: ${BEDS_DB_USER:medigraph}
+    password: ${BEDS_DB_PASSWORD:medigraph}   # local dev default only
+  flyway:
+    schemas: beds
+    default-schema: beds
+    # append ,classpath:db/postgis together with BEDS_LOCATOR=postgis
+    locations: ${BEDS_FLYWAY_LOCATIONS:classpath:db/migration,classpath:db/platform}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+server:
+  port: ${PORT:8089}
+management:
+  health:
+    redis:
+      enabled: ${BEDS_REDIS_HEALTH:false}   # set true with BEDS_HOLD_STORE=redis
+medigraph:
+  beds:
+    hold-store: ${BEDS_HOLD_STORE:jdbc}      # jdbc | redis
+    locator: ${BEDS_LOCATOR:jdbc}            # jdbc (bounding box + haversine heap) | postgis (GiST KNN)
+    default-hold-ttl: ${BEDS_HOLD_TTL:15m}
+    expiry-interval: ${BEDS_EXPIRY_INTERVAL:30s}
+    shards: ${BEDS_SHARDS:beds-shard-1,beds-shard-2,beds-shard-3}
+    virtual-nodes: 128
+  security:
+    jwt:
+      jwk-set-uri: ${JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}

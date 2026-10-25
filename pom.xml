@@ -36,6 +36,7 @@
         <module>services/records-service</module>
         <module>services/prescription-service</module>
         <module>services/icu-service</module>
+        <module>services/beds-service</module>
     </modules>
 
     <properties>
