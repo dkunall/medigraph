@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: icu-service
+  datasource:
+    url: ${ICU_DB_URL:jdbc:postgresql://localhost:5432/icu?currentSchema=icu}
+    username: ${ICU_DB_USER:medigraph}
+    password: ${ICU_DB_PASSWORD:medigraph}   # local dev default only
+  flyway:
+    schemas: icu
+    default-schema: icu
+server:
+  port: ${PORT:8088}
+medigraph:
+  icu:
+    identity-url: ${IDENTITY_URL:http://localhost:8081}
+    processor: ${ICU_PROCESSOR:kafka}              # kafka | in-memory (single instance, state lost on restart)
+    kafka-bootstrap: ${KAFKA_BOOTSTRAP:localhost:9092}
+    watermark-interval: ${ICU_WATERMARK_INTERVAL:30s}
+  ledger:
+    nodes: ${LEDGER_NODES:http://localhost:8085,http://localhost:8086,http://localhost:8087}
+  security:
+    jwt:
+      jwk-set-uri: ${JWK_SET_URI:http://localhost:8080/.well-known/jwks.json}
+    client:
+      id: icu-service
+      secret: ${OAUTH_CLIENT_SECRET:dev-only-icu-secret}   # dev default, matches the gateway's dev issuer
+      token-uri: ${TOKEN_URI:http://localhost:8080/oauth2/token}

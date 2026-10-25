@@ -35,6 +35,7 @@
         <module>services/consent-service</module>
         <module>services/records-service</module>
         <module>services/prescription-service</module>
+        <module>services/icu-service</module>
     </modules>
 
     <properties>
