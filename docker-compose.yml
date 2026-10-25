@@ -39,6 +39,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_HEAP_OPTS: -Xmx512m -Xms512m
 
   redis:
     image: redis:7.2-alpine
@@ -49,6 +50,7 @@ services:
 
   gateway:
     build: services/api-gateway
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       GATEWAY_DEV_ISSUER: "true"
@@ -56,7 +58,7 @@ services:
       RECORDS_URL: http://records:8082
       CONSENT_URL: http://consent:8083
       PRESCRIPTION_URL: http://prescription:8084
-      LEDGER_URL: http://ledger1:8085
+      LEDGER_URL: http://ledger1:8085,http://ledger2:8085,http://ledger3:8085
       ICU_URL: http://icu:8088
       BEDS_URL: http://beds:8089
     ports:
@@ -64,6 +66,7 @@ services:
 
   identity:
     build: services/identity-mpi-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       IDENTITY_DB_URL: jdbc:postgresql://postgres:5432/identity?currentSchema=identity
@@ -80,6 +83,7 @@ services:
 
   ledger1:
     build: services/ledger-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       LEDGER_DB_URL: jdbc:postgresql://postgres:5432/ledger1?currentSchema=ledger
@@ -100,6 +104,7 @@ services:
 
   ledger2:
     build: services/ledger-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       LEDGER_DB_URL: jdbc:postgresql://postgres:5432/ledger2?currentSchema=ledger
@@ -120,6 +125,7 @@ services:
 
   ledger3:
     build: services/ledger-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       LEDGER_DB_URL: jdbc:postgresql://postgres:5432/ledger3?currentSchema=ledger
@@ -140,6 +146,7 @@ services:
 
   consent:
     build: services/consent-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       CONSENT_DB_URL: jdbc:postgresql://postgres:5432/consent?currentSchema=consent
@@ -163,6 +170,7 @@ services:
 
   records:
     build: services/records-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       RECORDS_DB_URL: jdbc:postgresql://postgres:5432/records?currentSchema=records
@@ -186,6 +194,7 @@ services:
 
   prescription:
     build: services/prescription-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       PRESCRIPTION_DB_URL: jdbc:postgresql://postgres:5432/prescription?currentSchema=prescription
@@ -205,6 +214,7 @@ services:
 
   icu:
     build: services/icu-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       ICU_DB_URL: jdbc:postgresql://postgres:5432/icu?currentSchema=icu
@@ -228,6 +238,7 @@ services:
 
   beds:
     build: services/beds-service
+    mem_limit: 512m
     environment:
       SPRING_PROFILES_ACTIVE: json
       BEDS_DB_URL: jdbc:postgresql://postgres:5432/beds?currentSchema=beds
