@@ -28,6 +28,8 @@
         <module>medigraph-icu</module>
         <module>medigraph-beds</module>
         <module>medigraph-platform</module>
+        <module>medigraph-arch-rules</module>
+        <module>medigraph-test-support</module>
     </modules>
 
     <properties>

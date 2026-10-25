@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.medigraph</groupId><artifactId>medigraph-parent</artifactId><version>0.1.0-SNAPSHOT</version></parent>
+    <artifactId>medigraph-arch-rules</artifactId>
+    <description>ArchUnit rules shared by every service (hexagonal layering, constructor injection, pure domain).</description>
+    <dependencies>
+        <dependency><groupId>com.tngtech.archunit</groupId><artifactId>archunit-junit5</artifactId></dependency>
+        <!-- test: verify the domain libraries themselves stay framework-free -->
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-common</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-crypto</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-mpi</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-ledger</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-consent</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-prescription</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-icu</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.medigraph</groupId><artifactId>medigraph-beds</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+    </dependencies>
+</project>
